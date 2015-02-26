@@ -22,21 +22,25 @@ stream.user do |ev|
   if ev.is_a? Array # Initial array sent on first connection
     puts "Online!"
   elsif ev.is_a? Twitter::Tweet
-    text = "#{ev.user.screen_name}: #{ev.text}"
+    text = "@#{ev.user.screen_name}: #{ev.text}"
     #puts "It's a tweet! #{text}"
-    scheduler.every '1h', :first_in => '1m', :times => 48 do
-      status = client.status ev
+    scheduler.every '30m', :first_in => '1m', :times => 96 do
+      begin
+        status = client.status ev
+      rescue  Twitter::Error::NotFound => e
+      end
       if not status.is_a? Twitter::Tweet
         puts text
         # FIXME unschedule
       end
     end
   elsif ev.is_a? Twitter::Streaming::StallWarning
-    warn "Falling behind!"
+    warn "Falling behind"
   elsif ev.is_a? Twitter::Streaming::DeletedTweet
-    puts "FIXME we should raise the event right now!"
+    #puts "FIXME we should raise the event right now!"
+  elsif ev.is_a? Twitter::Streaming::Event
+    puts "EVENT: #{ev.name} #{ev.source} #{ev.target} #{ev.target_object}"
   else
-    puts "something else"
-    puts ev
+    puts "something else #{ev}"
   end
 end
